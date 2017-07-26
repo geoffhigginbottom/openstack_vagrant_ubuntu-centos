@@ -1,0 +1,82 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: update
+  
+# - name: Ensure NTP is installed
+#   package: 
+#     name: ntp 
+#     state: present
+  
+# - name: Ensure NTP is running and set to auto start (Ubuntu)
+#   service: 
+#     name: ntp
+#     state: started 
+#     enabled: yes
+#   when: ansible_os_family == "Debian"
+
+# - name: Ensure NTPD is running and set to auto start (RedHat)
+#   service: 
+#     name: ntpd
+#     state: started 
+#     enabled: yes
+#   when: ansible_os_family == "RedHat"
+  
+# - name: configure ntp.conf (Ubuntu)
+#   template: 
+#     src: ubuntu-ntp.conf 
+#     dest: /etc/ntp.conf
+#     backup: yes
+#   when: ansible_os_family == "Debian"
+#   notify: restart ntp
+
+# - name: configure ntp.conf (RedHat)
+#   template: 
+#     src: redhat-ntp.conf 
+#     dest: /etc/ntp.conf
+#     backup: yes
+#   when: ansible_os_family == "RedHat"
+#   notify: restart ntpd
+
+- name: Ensure Chrony is installed
+  package: 
+    name: chrony
+    state: present
+
+- name: configure chrony.conf (Ubuntu)
+  template: 
+    src: ubuntu-chrony.conf 
+    dest: /etc/chrony/chrony.conf
+    backup: yes
+  when: ansible_os_family == "Ubuntu"
+  notify: restart chrony
+
+- name: configure chrony.conf (RedHat)
+  template: 
+    src: redhat-chrony.conf 
+    dest: /etc/chrony.conf
+    backup: yes
+  when: ansible_os_family == "RedHat"
+  notify: restart chronyd
+
+- name: Ensure Chrony is running and set to auto start (Ubuntu)
+  service: 
+    name: chrony
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "Ubuntu"
+
+- name: Ensure Chrony is running and set to auto start (RedHat)
+  service: 
+    name: chronyd
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"

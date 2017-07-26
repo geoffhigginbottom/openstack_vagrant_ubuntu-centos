@@ -1,0 +1,175 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: update
+
+- name: Install Disk Tools
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - parted
+    - xfsprogs
+  tags: 
+    - disk-tools
+
+### sdb start ###
+- name: Check for valid partition table
+  command: parted -s /dev/sdb print 1
+  register: sdb
+  failed_when: sdb.rc is not defined
+  changed_when: > 
+    sdb.stderr == "Error: /dev/sdb: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Debug Partition Table
+  debug: var=sdb
+  tags: 
+    - parted
+
+- name: Reset partiton table to MSDOS style
+  command: parted --script /dev/sdb mklabel msdos
+  when:  >
+    sdb.stderr == "Error: /dev/sdb: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Check for /dev/sdb
+  command: parted -s /dev/sdb print 1
+  register: sdb1
+  failed_when: sdb1.rc is not defined
+  changed_when: > 
+    sdb1.stdout == "Error: Partition doesn't exist."
+  tags:
+    - parted
+  
+- name: Debug Partition Exists
+  debug: var=sdb1
+  tags: 
+    - parted
+
+- name: create partition
+  command: parted -s /dev/sdb mkpart primary 0cyl 100%
+  when: sdb1.rc != 0
+  tags: 
+    - parted
+
+- name: Create filesystem
+  filesystem: 
+    fstype: xfs 
+    dev: /dev/sdb1 
+    opts: "-i size=1024"
+  tags:
+    - filesystem
+### sdb end ###
+
+### sdc start ###
+- name: Check for valid partition table
+  command: parted -s /dev/sdc print 1
+  register: sdc
+  failed_when: sdc.rc is not defined
+  changed_when: > 
+    sdc.stderr == "Error: /dev/sdc: unrecognised disk label"
+  tags:
+    - parted
+
+- name: Debug Partition Table
+  debug: var=sdc
+  tags: 
+    - parted
+
+- name: Reset partiton table to MSDOS style
+  command: parted --script /dev/sdc mklabel msdos
+  when:  >
+    sdc.stderr == "Error: /dev/sdc: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Check for /dev/sdc
+  command: parted -s /dev/sdc print 1
+  register: sdc1
+  failed_when: sdc1.rc is not defined
+  changed_when: > 
+    sdc1.stdout == "Error: Partition doesn't exist."
+  tags:
+    - parted
+  
+- name: Debug Partition Exists
+  debug: var=sdc1
+  tags: 
+    - parted
+
+- name: create partition
+  command: parted -s /dev/sdc mkpart primary 0cyl 100%
+  when: sdc1.rc != 0
+  tags: 
+    - parted
+
+- name: Create filesystem
+  filesystem: 
+    fstype: xfs 
+    dev: /dev/sdc1 
+    opts: "-i size=1024"
+  tags:
+    - filesystem
+### sdc end ###
+
+### sdd start ###
+- name: Check for valid partition table
+  command: parted -s /dev/sdd print 1
+  register: sdd
+  failed_when: sdd.rc is not defined
+  changed_when: > 
+    sdd.stderr == "Error: /dev/sdd: unrecognised disk label"
+  tags:
+    - parted
+
+- name: Debug Partition Table
+  debug: var=sdd
+  tags: 
+    - parted
+
+- name: Reset partiton table to MSDOS style
+  command: parted --script /dev/sdd mklabel msdos
+  when:  >
+    sdd.stderr == "Error: /dev/sdd: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Check for /dev/sdd
+  command: parted -s /dev/sdd print 1
+  register: sdd1
+  failed_when: sdd1.rc is not defined
+  changed_when: > 
+    sdd1.stdout == "Error: Partition doesn't exist."
+  tags:
+    - parted
+  
+- name: Debug Partition Exists
+  debug: var=sdd1
+  tags: 
+    - parted
+
+- name: create partition
+  command: parted -s /dev/sdd mkpart primary 0cyl 100%
+  when: sdd1.rc != 0
+  tags: 
+    - parted
+
+- name: Create filesystem
+  filesystem: 
+    fstype: xfs 
+    dev: /dev/sdd1 
+    opts: "-i size=1024"
+  tags:
+    - filesystem
+### sdd end ###

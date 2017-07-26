@@ -1,0 +1,74 @@
+---
+
+cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/newton main
+# cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/ocata main
+
+centos_openstack_release: centos-release-openstack-newton
+
+### NTP Sewrver Settings ###
+# Used in the NTP Server and NTP Client Roles
+ntp_server_ip: 10.0.0.11
+ntp_allow_ip_range: 10.0.0.0
+ntp_allow_mask: 255.255.255.0
+chrony_allow_range: 10.0.0.0/24
+
+### Hosts File Settings ###
+domain_name: openstack-newton.local
+
+controller1_mgmt_ip: 10.0.0.11
+controller1_hostname: controller1
+controller1_api_ip: 203.0.113.11
+controller1_api_hostname: controller1-api
+
+compute1_mgmt_ip: 10.0.0.31
+compute1_hostname: compute1
+compute1_api_ip: 203.0.113.31
+compute1_api_hostname: compute1-api
+
+block1_mgmt_ip: 10.0.0.41
+block1_hostname: block1
+
+object1_mgmt_ip: 10.0.0.51
+object1_hostname: object1
+
+object2_mgmt_ip: 10.0.0.52
+object2_hostname: object2
+
+
+#Linux Academy Passwords - not used, just here for reference
+service_pass: linuxacademy123
+service_db_pass: linuxacademy123
+admin_pass: openstack
+demo_pass: openstack
+
+### Neutron Settings ###
+# vm_interface_name: enp0s10 # Name of the Interface used for the VM traffic
+provider_interface_name: enp0s9 # Name of the Interface used on the Controller for the provider network
+nova_metadata_ip: "{{ controller1_mgmt_ip }}"
+metadata_secret: ab6d608725dbe24c17d0
+# overlay_ip: 172.18.0.100 # IP Address of the interface used for the Overlay Networks on the Controller
+# compute01_overlay_ip: 172.18.0.101
+# compute02_overlay_ip: 172.18.0.102
+
+### Nova Settings ###
+novncproxy_base_url: http://{{ controller1_mgmt_ip }}:6080/vnc_auto.html
+
+### DB Settings ###
+db_server_ip: "{{ controller1_mgmt_ip }}"
+MYSQL_ROOT_PASS: openstack
+neutron_db_username: neutron
+neutron_db_password: openstack
+glance_db_username: glance
+glance_db_password: openstack
+keystone_db_username: keystone
+keystone_db_password: openstack
+nova_db_username: nova
+nova_db_password: openstack
+mgmt_cidr: 10.0.0.%
+
+### Rabbit & Memcached ###
+rabbit_user: openstack
+rabbit_password: rabbit
+rabbit_server_ip: "{{ controller1_mgmt_ip }}"
+memcached_servers: "{{ controller1_mgmt_ip }}:11211"
+memcached_server_ip: "{{ controller1_mgmt_ip }}"

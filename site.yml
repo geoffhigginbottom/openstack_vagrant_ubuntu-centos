@@ -1,0 +1,23 @@
+---
+
+### base build start ###
+- include: copy-keys.yml
+- include: data-disk-block.yml
+- include: data-disk-object.yml
+- include: ntp-server.yml
+- include: ntp-client.yml
+- include: cloud-archive.yml
+### base build end ###
+
+# - include: network-settings.yml
+# - include: mariadb.yml
+# - include: rabbitmq-server.yml
+# - include: memcached.yml
+# - include: keystone-install.yml
+# - include: keystone-configure.yml
+# - include: glance.yml
+# - include: nova-controller.yml
+# - include: nova.yml
+# - include: neutron.yml
+# - include: neutron-compute.yml
+# - include: horizon.yml

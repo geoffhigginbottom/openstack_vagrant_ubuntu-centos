@@ -1,0 +1,5 @@
+---
+- hosts: block
+
+  roles:
+    - data-disk-block

@@ -1,0 +1,5 @@
+---
+- hosts: object
+
+  roles:
+    - data-disk-object

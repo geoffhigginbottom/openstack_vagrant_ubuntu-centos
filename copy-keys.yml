@@ -1,0 +1,7 @@
+---
+- hosts: general
+
+  remote_user: vagrant
+  roles:
+    - copy-keys
+  

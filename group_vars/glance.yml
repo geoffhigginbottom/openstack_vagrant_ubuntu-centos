@@ -1,0 +1,24 @@
+---
+
+### Glance Settings ###
+glance_service_adminurl: http://{{ admin_endpoint_ip }}:9292
+glance_service_publicurl: http://{{ public_endpont_ip }}:9292
+glance_service_internalurl: http://{{ internal_endpoint_ip }}:9292
+
+cirros_deploy_image: true
+cirros_image_url: http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
+cirros_file_name: cirros-0.3.5-x86_64-disk.img
+cirros_image_checksum: md5:ee1eca47dc88f4879d8a229cc70a07c6
+cirros_image_name: CirrOS 0.3.5
+
+# ubuntu_deploy_image: true
+# ubuntu_image_url: http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+# ubuntu_file_name: trusty-server-cloudimg-amd64-disk1.img
+# ubuntu_image_checksum: md5:a040c4d05d28a7eaf38252809e5d25f0
+# ubuntu_image_name: Ubuntu 14.04 LTS Cloud Image
+
+ubuntu_deploy_image: true
+ubuntu_image_url: http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img
+ubuntu_file_name: xenial-server-cloudimg-amd64-disk1.img
+ubuntu_image_checksum: md5:d635b8e67e29ba2dcde9da7ae634e404
+ubuntu_image_name: Ubuntu 16.04 LTS Cloud Image

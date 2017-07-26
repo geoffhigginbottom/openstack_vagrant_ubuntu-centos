@@ -1,0 +1,34 @@
+### This inventory file is only used for testing individual playbooks, a vagrant inventory is used when 'vagrant up' is run
+
+[controller]
+controller1  ansible_host=10.0.0.11
+
+[compute]
+compute1 ansible_host=10.0.0.31
+
+[block]
+block1  ansible_host=10.0.0.41
+
+[object]
+object1 ansible_host=10.0.0.51
+object2 ansible_host=10.0.0.52
+
+[keystone:children]
+controller
+
+[glance:children]
+controller
+
+[ntp-server:children]
+controller
+
+[ntp-client:children]
+compute
+block
+object
+
+[general:children]
+controller
+compute
+block
+object

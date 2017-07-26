@@ -1,0 +1,71 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: update
+
+- name: Install Disk Tools
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - parted
+    - xfsprogs
+  tags: 
+    - disk-tools
+
+- name: Check for valid partition table
+  command: parted -s /dev/sdb print 1
+  register: sdb
+  failed_when: sdb.rc is not defined
+  changed_when: > 
+    sdb.stderr == "Error: /dev/sdb: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Debug Partition Table
+  debug: var=sdb
+  tags: 
+    - parted
+
+- name: Reset partiton table to MSDOS style
+  command: parted --script /dev/sdb mklabel msdos
+  when:  >
+    sdb.stderr == "Error: /dev/sdb: unrecognised disk label"
+  tags: 
+    - parted
+
+- name: Check for /dev/sdb
+  command: parted -s /dev/sdb print 1
+  register: sdb1
+  failed_when: sdb1.rc is not defined
+  changed_when: > 
+    sdb1.stdout == "Error: Partition doesn't exist."
+  tags:
+    - parted
+  
+- name: Debug Partition Exists
+  debug: var=sdb1
+  tags: 
+    - parted
+
+- name: create partition
+  command: parted -s /dev/sdb mkpart primary 0cyl 100%
+  when: sdb1.rc != 0
+  tags: 
+    - parted
+
+- name: Create filesystem
+  filesystem: 
+    fstype: xfs 
+    dev: /dev/sdb1 
+    opts: "-i size=1024"
+  tags:
+    - filesystem
