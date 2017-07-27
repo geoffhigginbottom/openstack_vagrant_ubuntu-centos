@@ -1,0 +1,5 @@
+### Ansible Managed File ###
+
+[client]
+user=root
+password={{ MYSQL_ROOT_PASS }}

@@ -1,0 +1,4 @@
+---
+  
+- name: flush privileges
+  command: mysqladmin -uroot -p{{ MYSQL_ROOT_PASS }} flush-privileges

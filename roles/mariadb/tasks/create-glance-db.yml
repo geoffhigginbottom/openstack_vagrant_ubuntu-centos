@@ -1,0 +1,25 @@
+---
+- name: Create DB
+  mysql_db: 
+    name: glance 
+    state: present
+  tags: glance_db
+  
+- name: Create Glance DB User and ensure access privileges are granted
+  mysql_user: 
+    name: "glance"
+    host: "{{ item }}"
+    password: "{{ glance_db_password }}"
+    priv: 'glance.*:ALL'
+    state: present
+  with_items:
+    - "{{ mgmt_cidr }}"
+    - 127.0.0.1
+    - localhost
+  register: result
+  tags: glance_db
+
+- name: flush privileges
+  command: mysqladmin -uroot -p{{ MYSQL_ROOT_PASS }} flush-privileges
+  when: result.changed
+  tags: glance_db

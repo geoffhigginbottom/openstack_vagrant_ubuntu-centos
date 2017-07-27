@@ -1,0 +1,31 @@
+---
+- name: Create Nova DBs
+  mysql_db: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nova
+    - nova_api
+  tags:
+    - nova_dbs
+
+- name: Create Nova DB User and ensure access privileges are granted
+  mysql_user: 
+    name: "{{ nova_db_username }}" 
+    host: "{{ item }}" 
+    password: "{{ nova_db_password }}"
+    priv: 'nova.*:ALL/nova_api.*:ALL'
+    state: present
+  with_items:
+    - "{{ mgmt_cidr }}"
+    - 127.0.0.1
+    - localhost
+  register: result
+  tags:
+    - nova_dbs
+
+- name: flush privileges
+  command: mysqladmin -uroot -p{{ MYSQL_ROOT_PASS }} flush-privileges
+  when: result.changed
+  tags:
+    - nova_dbs

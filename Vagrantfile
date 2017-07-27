@@ -13,26 +13,33 @@
 # Whilst Vagrant will create the first folder based on the 'groups' setting below
 # using this path to store the extra volumes causes an initial failure if the 
 # following two folders do not exist when vagrant.configure runs 
-dir = "#{ENV['HOME']}/VirtualBox VMs/openstack-newton"
+dir = "#{ENV['HOME']}/VirtualBox VMs/ovuc"
 unless File.directory?( dir )
     Dir.mkdir dir
 end # unless
 
-dir = "#{ENV['HOME']}/VirtualBox VMs/openstack-newton/additional-disks"
+dir = "#{ENV['HOME']}/VirtualBox VMs/ovuc/additional-disks"
 unless File.directory?( dir )
     Dir.mkdir dir
 end # unless
 
 Vagrant.configure("2") do |config| 
+  
   # config.vm.box = "bento/ubuntu-16.04"
+  # config.vm.box = "~/./VirtualBox\ VMs/ubuntu-xenial-20170711"
+  
+  # config.vm.box = "~/./VirtualBox\ VMs/centos-7-20170727.box"
   config.vm.box = "bento/centos-7.3"
+  # config.vm.box = "skyzyx/centos7"
+  
   config.vm.usable_port_range = 2800..2900
   config.vm.boot_timeout = 360
+  config.vm.synced_folder ".", "/vagrant", disabled: true
   nodes.each do |prefix, (count, ip_start)|
     count.times do |i|
       hostname = "%s" % [prefix, (i+1)]
       config.vm.define "#{hostname}" do |box|
-        box.vm.hostname = "#{hostname}.openstack-newton.local"
+        box.vm.hostname = "#{hostname}.ovuc.local"
 
         if prefix == "controller1" or prefix == "compute1"
           box.vm.network :private_network, ip: "10.0.0.#{ip_start+i}", :netmask => "255.255.255.0" # Management Network
@@ -45,30 +52,21 @@ Vagrant.configure("2") do |config|
           # Defaults
           vbox.linked_clone = true
           vbox.name = "#{hostname}"
-          vbox.customize ["modifyvm", :id, "--groups", "/openstack-newton"]
+          vbox.customize ["modifyvm", :id, "--groups", "/ovuc"]
           vbox.customize ["modifyvm", :id, "--memory", 4096]
           vbox.customize ["modifyvm", :id, "--cpus", 1]
           vbox.customize ["modifyvm", :id, "--pae", "on"]
           vbox.customize ["modifyvm", :id, "--paravirtprovider", "kvm"]
-          vbox.customize ["modifyvm", :id, "--cableconnected1", "on"] # fix for bento box image which has eth0 nat interface disconnected
           vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
           vbox.customize ["modifyvm", :id, "--nictype2", "virtio"]
           vbox.customize ["modifyvm", :id, "--nictype3", "virtio"]
           vbox.customize ["modifyvm", :id, "--nictype4", "virtio"]
           
-          # if prefix == "controller1"
-          #   xxx
-          # end # controller
-
-          # if prefix == "compute1"
-          #   xxx
-          # end # compute
-
           if prefix == "block1"
             vbox.customize ["modifyvm", :id, "--memory", 2048]
             #vbox.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
 
-            dir = "#{ENV['HOME']}/VirtualBox VMs/openstack-newton/additional-disks"
+            dir = "#{ENV['HOME']}/VirtualBox VMs/ovuc/additional-disks"
             unless File.directory?( dir )
                 Dir.mkdir dir
             end # unless
@@ -82,7 +80,7 @@ Vagrant.configure("2") do |config|
           if prefix == "object1" or prefix == "object2"
             vbox.customize ["modifyvm", :id, "--memory", 2048]
           
-            dir = "#{ENV['HOME']}/VirtualBox VMs/openstack-newton/additional-disks"
+            dir = "#{ENV['HOME']}/VirtualBox VMs/ovuc/additional-disks"
             unless File.directory?( dir )
                 Dir.mkdir dir
             end # unless

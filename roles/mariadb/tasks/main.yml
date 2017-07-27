@@ -1,0 +1,194 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Packages Ubuntu
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mariadb-server
+    - python-pymysql
+    - python-mysqldb
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - common
+
+- name: Install Packages RedHat
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mariadb
+    - mariadb-server
+    - python2-PyMySQL
+    - MySQL-python
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: replace MySQL my.cnf using Template
+  template: 
+    src: my.cnf
+    dest: /etc/mysql/my.cnf 
+    backup: yes
+  when: ansible_os_family == "Debian"
+  register: restart_mysql_my_cnf
+  tags: 
+    - my_cnf
+    - ubuntu
+
+- name: Generate openstack.cnf using Template
+  template: 
+    src: openstack.cnf
+    dest: /etc/my.cnf.d/openstack.cnf 
+    backup: yes
+  when: ansible_os_family == "RedHat"
+  register: restart_openstack_cnf
+  tags: 
+    - openstack.cnf
+    - redhat
+
+- name: Update character-sets for 50-client.cnf
+  lineinfile:
+    dest: "/etc/mysql/mariadb.conf.d/50-client.cnf"
+    regexp: "default-character-set"
+    line: "default-character-set = utf8"
+  register: restart_mysql_50_client_cnf
+  when: ansible_os_family == "Debian"
+  tags:
+    - char-set
+    - ubuntu
+
+- name: Update character-sets for 50-mysql-clients.cnf
+  lineinfile:
+    dest: "/etc/mysql/mariadb.conf.d/50-mysql-clients.cnf"
+    regexp: "default-character-set"
+    line: "default-character-set = utf8"
+  register: restart_mysql_50_mysql_clients_cnf
+  when: ansible_os_family == "Debian"
+  tags:
+    - char-set
+    - ubuntu
+
+- name: Update character-sets for 50-server.cnf
+  lineinfile:
+    dest: "/etc/mysql/mariadb.conf.d/50-server.cnf"
+    regexp: '{{ item.regexp }}'
+    line: '{{ item.line }}'
+  register: restart_mysql_50_server_cnf
+  with_items:
+    - { regexp: 'character-set-server', line: 'character-set-server  = utf8' }
+    - { regexp: 'collation-server', line: 'collation-server      = utf8_general_ci' }
+  when: ansible_os_family == "Debian"
+  tags:
+    - char-set
+    - ubuntu
+
+- name: restart mysql
+  service: name=mysql state=restarted
+  when: (restart_mysql_my_cnf.changed) or (restart_mysql_50_client_cnf.changed) or (restart_mysql_50_mysql_clients_cnf.changed) or (restart_mysql_50_server_cnf.changed)
+  tags:
+    - my_cnf
+    - char-set
+    - ubuntu
+
+- name: restart MariaDB
+  systemd: 
+    name: mariadb 
+    state: restarted
+  when: (restart_openstack_cnf.changed) and (ansible_os_family == "RedHat") 
+  tags:
+    - openstack.cnf
+    - redhat
+
+- name: Ensure MySQL service is started and set to start on boot
+  service: 
+    name: mysql 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "Debian"
+  tags: 
+   - service
+   - ubuntu
+
+- name: Ensure MariaDB service is started and set to start on boot
+  systemd: 
+    name: mariadb 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - RedHat
+
+- name: Ensure mysql_admin access privileges are granted
+  mysql_user: 
+    name: "mysql_admin"
+    host: "{{ item }}"
+    password: "{{ MYSQL_ROOT_PASS }}"
+    priv: '*.*:GRANT,ALL'
+    state: present
+  with_items:
+    - "{{ mgmt_cidr }}"
+    - 127.0.0.1
+    - localhost
+  notify: flush privileges
+  tags:
+    - security
+    - common
+
+- name: Ensure remote root access privileges are denied
+  mysql_user: 
+    name: "root"
+    host: "{{ item }}"
+    password: "{{ MYSQL_ROOT_PASS }}"
+    priv: '*.*:GRANT,ALL'
+    state: absent
+  with_items:
+    - '%'
+  notify: flush privileges
+  tags:
+    - security
+    - common
+
+- name: update mysql root password for all root accounts
+  mysql_user: 
+    name: "root" 
+    host: "{{ item }}"
+    password: "{{ MYSQL_ROOT_PASS }}"
+  with_items:
+    - 127.0.0.1
+    - localhost
+  tags:
+    - security
+    - common
+
+- name: create /root/.my.cnf file with root password credentials
+  template: 
+    src: root.my.cnf 
+    dest: /root/.my.cnf 
+    owner: root 
+    mode: 0600
+  tags: 
+    - security
+    - common
+ 
+## Include Files ###
+- include: create-keystone-db.yml
+- include: create-neutron-db.yml
+- include: create-glance-db.yml
+- include: create-nova-dbs.yml

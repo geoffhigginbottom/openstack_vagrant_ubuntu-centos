@@ -9,7 +9,7 @@
 - include: cloud-archive.yml
 ### base build end ###
 
-# - include: network-settings.yml
+- include: network-settings.yml
 # - include: mariadb.yml
 # - include: rabbitmq-server.yml
 # - include: memcached.yml

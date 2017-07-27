@@ -1,0 +1,12 @@
+---
+
+- name: Add Hosts entries
+  lineinfile: dest={{ item.dest }} regexp={{ item.regexp }} line={{ item.line }}
+  with_items:
+    - { dest: "/etc/hosts", regexp: "{{ controller1_mgmt_ip }} {{controller1_hostname}}.{{domain_name}} {{controller1_hostname}}", line: "{{ controller1_mgmt_ip }} {{controller1_hostname}}.{{domain_name}} {{controller1_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ controller1_api_ip }} {{controller1_api_hostname}}.{{domain_name}} {{controller1_api_hostname}}", line: "{{ controller1_api_ip }} {{controller1_api_hostname}}.{{domain_name}} {{controller1_api_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ compute1_mgmt_ip }} {{compute1_hostname}}.{{domain_name}} {{compute1_hostname}}", line: "{{ compute1_mgmt_ip }} {{compute1_hostname}}.{{domain_name}} {{compute1_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ compute1_api_ip }} {{compute1_api_hostname}}.{{domain_name}} {{compute1_api_hostname}}", line: "{{ compute1_api_ip }} {{compute1_api_hostname}}.{{domain_name}} {{compute1_api_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ block1_mgmt_ip }} {{block1_hostname}}.{{domain_name}} {{block1_hostname}}", line: "{{ block1_mgmt_ip }} {{block1_hostname}}.{{domain_name}} {{block1_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ object1_mgmt_ip }} {{object1_hostname}}.{{domain_name}} {{object1_hostname}}", line: "{{ object1_mgmt_ip }} {{object1_hostname}}.{{domain_name}} {{object1_hostname}}"}
+    - { dest: "/etc/hosts", regexp: "{{ object2_mgmt_ip }} {{object2_hostname}}.{{domain_name}} {{object2_hostname}}", line: "{{ object2_mgmt_ip }} {{object2_hostname}}.{{domain_name}} {{object2_hostname}}"}

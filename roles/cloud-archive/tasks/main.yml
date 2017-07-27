@@ -13,19 +13,29 @@
     - packages
     - ubuntu
 
-- name: Install software-properties-common
-  apt: name=software-properties-common state=present
-  when: ansible_os_family == "Debian"
-  tags: 
-    - packages
-    - ubuntu
-  
-- name: Install ubuntu-cloud-keyring
-  apt: name=ubuntu-cloud-keyring state=present
+- name: Install  Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - software-properties-common
+    - ubuntu-cloud-keyring
   when: ansible_os_family == "Debian"
   tags:
     - packages
     - ubuntu
+
+# - name: Install software-properties-common
+#   apt: name=software-properties-common state=present
+#   when: ansible_os_family == "Debian"
+#   tags: 
+#     - packages
+#     - ubuntu
+  
+# - name: Install ubuntu-cloud-keyring
+#   apt: name=ubuntu-cloud-keyring state=present
+#   when: ansible_os_family == "Debian"
+#   tags:
+#     - packages
+#     - ubuntu
 
 - name: Add Ubuntu Cloud Archive Repository
   apt_repository: repo='{{ cloud_archive_repository }}' state=present
@@ -45,8 +55,9 @@
   yum: 
     name: "{{ centos_openstack_release }}"
     state: present
+  when: ansible_os_family == "RedHat"
   tags:
-    - centos
+    - redhat
 
 - name: Upgrade CentOS
   yum:
@@ -72,10 +83,7 @@
   register: stat_result
   tags:
     - upgrade
-    - upgrade_controller
-    - upgrade_compute
-    - upgrade_block
-    - upgrade_object
+    - common
 
 - name: Test stat results
   debug:
@@ -83,44 +91,43 @@
     verbosity: 3
   tags:
     - upgrade
-    - upgrade_controller
-    - upgrade_compute
+    - common
 
-- name: Reboot Controller
+- name: Reboot Controller?
   debug:
     msg: "Controller Reboot required"
   when: (inventory_hostname | search("controller")) and (stat_result.stat.exists == True) 
   notify: vagrant-shutdown
   tags:
     - upgrade
-    - upgrade_controller
+    - common
 
-- name: Reboot Compute
+- name: Reboot Compute?
   debug:
     msg: "Compute Reboot required"
   when: (inventory_hostname | search("compute")) and (stat_result.stat.exists == True) 
   notify: restart
   tags:
     - upgrade
-    - upgrade_compute
+    - common
 
-- name: Reboot Block
+- name: Reboot Block?
   debug:
     msg: "Block Reboot required"
   when: (inventory_hostname | search("block")) and (stat_result.stat.exists == True) 
   notify: restart
   tags:
     - upgrade
-    - upgrade_block
+    - common
 
-- name: Reboot Object
+- name: Reboot Object?
   debug:
     msg: "Object Reboot required"
   when: (inventory_hostname | search("object")) and (stat_result.stat.exists == True) 
   notify: restart
   tags:
     - upgrade
-    - upgrade_object
+    - common
 
 - name: vagrant-shutdown controller
   become: false
@@ -128,6 +135,7 @@
   when: (inventory_hostname | search("controller")) and (stat_result.stat.exists == True) 
   tags:
     - upgrade
+    - common
 
 - name: vagrant boot controller
   become: false
@@ -135,6 +143,7 @@
   when: (inventory_hostname | search("controller")) and (stat_result.stat.exists == True) 
   tags:
     - upgrade
+    - common
 
 - name: Restart Compute
   shell: sleep 2 && shutdown -r now "Ansible triggered restart"
@@ -145,6 +154,7 @@
   when: (inventory_hostname | search("compute")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
 
 - name: Wait for Compute Nodes to reboot
   local_action: wait_for host={{ ansible_hostname }} state=started delay=20 timeout=30
@@ -152,6 +162,7 @@
   when: (inventory_hostname | search("compute")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
 
 - name: Restart Block
   shell: sleep 2 && shutdown -r now "Ansible triggered restart"
@@ -162,6 +173,7 @@
   when: (inventory_hostname | search("block")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
 
 - name: Wait for Block Nodes to reboot
   local_action: wait_for host={{ ansible_hostname }} state=started delay=20 timeout=30
@@ -169,6 +181,7 @@
   when: (inventory_hostname | search("block")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
 
 - name: Restart Object
   shell: sleep 2 && shutdown -r now "Ansible triggered restart"
@@ -179,6 +192,7 @@
   when: (inventory_hostname | search("object")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
 
 - name: Wait for Object Nodes to reboot
   local_action: wait_for host={{ ansible_hostname }} state=started delay=20 timeout=30
@@ -186,3 +200,20 @@
   when: (inventory_hostname | search("object")) and (stat_result.stat.exists == True)
   tags:
     - upgrade
+    - common
+
+- name: Install python-openstackclient
+  package:
+    name: python-openstackclient
+    state: present
+  tags:
+    - packages
+    - common
+
+- name: Install openstack-selinux
+  package:
+    name: openstack-selinux
+    state: present
+  when: ansible_os_family == "RedHat"
+  tags:
+    - redhat

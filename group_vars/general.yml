@@ -34,16 +34,11 @@ object1_hostname: object1
 object2_mgmt_ip: 10.0.0.52
 object2_hostname: object2
 
-
-#Linux Academy Passwords - not used, just here for reference
-service_pass: linuxacademy123
-service_db_pass: linuxacademy123
-admin_pass: openstack
-demo_pass: openstack
-
 ### Neutron Settings ###
 # vm_interface_name: enp0s10 # Name of the Interface used for the VM traffic
-provider_interface_name: enp0s9 # Name of the Interface used on the Controller for the provider network
+# provider_interface_name: enp0s9 # Name of the Interface used on the Controller for the provider network
+provider_interface_name_ubuntu: enp0s9 # Name of the Interface used on the Controller for the provider network
+provider_interface_name_redhat: eth1 # Name of the Interface used on the Controller for the provider network
 nova_metadata_ip: "{{ controller1_mgmt_ip }}"
 metadata_secret: ab6d608725dbe24c17d0
 # overlay_ip: 172.18.0.100 # IP Address of the interface used for the Overlay Networks on the Controller
