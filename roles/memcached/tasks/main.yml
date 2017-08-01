@@ -1,0 +1,70 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - memcached
+    - python-memcache
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  package: 
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - memcached
+    - python-memcached
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: replace memcached.conf using Template (Ubuntu)
+  template: 
+    src: ubuntu-memcached.conf 
+    dest: /etc/memcached.conf 
+    backup: yes
+  notify: restart memcached
+  when: ansible_os_family == "Debian"
+  tags: 
+    - memcached.conf
+    - ubuntu
+
+- name: replace memcached using Template (RedHat)
+  template: 
+    src: redhat-memcached.conf
+    dest: /etc/sysconfig/memcached
+    backup: yes
+  notify: restart memcached
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - memcached
+    - redhat
+
+- name: Ensure Memcached service is started and set to start on boot (RedHat)
+  systemd: 
+    name: memcached 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat

@@ -1,0 +1,183 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - keystone
+    - python-openstackclient
+    - python-pip
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-keystone
+    - httpd
+    - mod_wsgi
+    - python-pip
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: install Shade
+  pip:
+    name: shade
+  tags:
+    - shade
+    - ubuntu
+    - redhat
+
+- name: Create /etc/keystone/keystone.conf file (Ubuntu)
+  template: 
+    src: ubuntu-keystone.conf 
+    dest: /etc/keystone/keystone.conf 
+    owner: root 
+    mode: 0644 
+    backup: yes
+  register: result
+  when: ansible_os_family == "Debian"
+  tags: 
+    - keystone.conf
+    - ubuntu
+
+- name: Create /etc/keystone/keystone.conf file (RedHat)
+  template: 
+    src: redhat-keystone.conf 
+    dest: /etc/keystone/keystone.conf 
+    owner: root 
+    mode: 0644 
+    backup: yes
+  register: result
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - keystone.conf
+    - redhat
+
+- name: Does Keystone DB Exist
+  command:  mysql -e \ "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'keystone' AND  table_name = 'access_token';"
+  register: db_exist
+  changed_when: false
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: Create Keystone DB Schema
+  command: keystone-manage db_sync
+  when: db_exist.stdout != "TABLE_SCHEMA\nkeystone"
+  tags: 
+    - db
+    - ubuntu
+    - redhat
+
+- name: Remove /var/lib/keystone/keystone.db
+  file: 
+    path: /var/lib/keystone/keystone.db 
+    state: absent
+  tags: 
+    - db
+    - ubuntu
+    - redhat
+
+- name: Initialize Fernet Keys 1 of 2
+  command: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+  changed_when: false
+  tags:
+    - fernet
+    - ubuntu
+    - redhat
+
+- name: Initialize Fernet Keys 2 of 2
+  command: keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  changed_when: false
+  tags:
+    - fernet
+    - ubuntu
+    - redhat
+
+- name: Bootstrap Identity service
+  command: keystone-manage bootstrap --bootstrap-password {{ keystone_admin_password }} --bootstrap-admin-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-internal-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-public-url http://{{ controller1_mgmt_ip }}:5000/v3/ --bootstrap-region-id RegionOne
+  changed_when: false
+  when: ansible_os_family == "RedHat"
+  tags:
+    - bootstrap
+    - redhat
+
+- name: Add ServerName attribute to /etc/apache2/apache2.conf
+  lineinfile: 
+    dest: /etc/apache2/apache2.conf
+    regexp: 'ServerName'
+    line: 'ServerName {{ ansible_hostname }}'
+  notify: restart apache2
+  when: ansible_os_family == "Debian"
+  tags:
+    - apache
+    - ubuntu
+
+- name: Set HTTPD ServerName (RedHat)
+  lineinfile:
+    dest: /etc/httpd/conf/httpd.conf
+    regexp: 'ServerName'
+    line: 'ServerName {{ controller1_mgmt_ip }}'
+    backup: yes
+  notify: restart httpd
+  when: ansible_os_family == "RedHat"
+  tags:
+    - httpd
+    - redhat
+
+- name: create wsgi-keystone.conf link
+  file:
+    src: /usr/share/keystone/wsgi-keystone.conf
+    dest: /etc/httpd/conf.d/wsgi-keystone.conf
+    state: link
+  when: ansible_os_family == "RedHat"
+  tags:
+    - httpd
+    - wsgi
+    - redhat
+
+# - name: Restart apache2
+#   service: name=apache2 state=restarted
+#   when: ansible_os_family == "Debian"
+#   tags: 
+#     - apache
+#     - ubuntu
+
+- name: Ensure httpd service is started and set to start on boot
+  systemd: 
+    name: httpd 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat
+      
+- name: Copy locally keystone source files
+  template: src={{ item }} dest=/root/{{ item }}
+  with_items:
+    - openrc
+    - admin-openrc
+    - demo-openrc
+  tags: 
+    - openrc
+    - ubuntu
+    - redhat

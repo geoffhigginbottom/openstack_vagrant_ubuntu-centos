@@ -1,0 +1,9 @@
+export OS_PROJECT_DOMAIN_NAME={{admin_domain}}
+export OS_USER_DOMAIN_NAME={{admin_domain}}
+export OS_PROJECT_NAME={{admin_project}}
+export OS_USERNAME={{admin_username}}
+export OS_PASSWORD={{admin_password}}
+export OS_AUTH_URL=http://{{controller1_mgmt_ip}}:35357/v3
+export OS_IDENTITY_API_VERSION=3
+export OS_IMAGE_API_VERSION=2
+export PS1="[\u@\h \W(keystone_$OS_PROJECT_NAME)]$"

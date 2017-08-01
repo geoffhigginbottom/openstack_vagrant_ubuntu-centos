@@ -1,0 +1,5 @@
+---
+- hosts: controller
+  become: false
+  roles:
+    - keystone-configure

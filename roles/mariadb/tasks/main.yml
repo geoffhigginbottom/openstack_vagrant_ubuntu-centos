@@ -24,7 +24,8 @@
   when: ansible_os_family == "Debian"
   tags: 
     - packages
-    - common
+    - ubuntu
+    - redhat
 
 - name: Install Packages RedHat
   package: 
@@ -133,7 +134,7 @@
   when: ansible_os_family == "RedHat"
   tags: 
    - service
-   - RedHat
+   - redhat
 
 - name: Ensure mysql_admin access privileges are granted
   mysql_user: 
@@ -149,7 +150,8 @@
   notify: flush privileges
   tags:
     - security
-    - common
+    - ubuntu
+    - redhat
 
 - name: Ensure remote root access privileges are denied
   mysql_user: 
@@ -163,7 +165,8 @@
   notify: flush privileges
   tags:
     - security
-    - common
+    - ubuntu
+    - redhat
 
 - name: update mysql root password for all root accounts
   mysql_user: 
@@ -175,7 +178,8 @@
     - localhost
   tags:
     - security
-    - common
+    - ubuntu
+    - redhat
 
 - name: create /root/.my.cnf file with root password credentials
   template: 
@@ -185,8 +189,35 @@
     mode: 0600
   tags: 
     - security
-    - common
+    - ubuntu
+    - redhat
  
+- name: Delete anonymous user
+  mysql_user: 
+    name: '' 
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - controller1.ovuc.local
+    - localhost
+  register: result
+  tags: 
+    - anonymous
+    - ubuntu
+    - redhat
+
+- name: Delete Test DB
+  mysql_db: 
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - test
+    - test\_%
+  tags:
+    - test_db
+    - ubuntu
+    - redhat
+
 ## Include Files ###
 - include: create-keystone-db.yml
 - include: create-neutron-db.yml

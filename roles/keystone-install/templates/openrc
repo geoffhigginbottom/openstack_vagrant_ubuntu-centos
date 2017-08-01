@@ -1,0 +1,3 @@
+export OS_TOKEN={{ keystone_auth_admin_token }}
+export OS_URL=http://{{controller1_mgmt_ip}}:35357/v3
+export OS_IDENTITY_API_VERSION=3

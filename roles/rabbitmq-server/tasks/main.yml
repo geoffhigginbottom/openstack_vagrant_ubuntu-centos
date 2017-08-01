@@ -1,0 +1,59 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install rabbitmq-server
+  package: 
+    name: rabbitmq-server 
+    state: present
+  tags: 
+    - packages
+    - redhat
+    - ubnuntu
+
+- name: Ensure RabbitMQ service is started and set to start on boot
+  systemd: 
+    name: rabbitmq-server
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat
+    
+- name: create /etc/rabbitmq/rabbitmq-env.conf  file
+  template: 
+    src: rabbitmq-env.conf
+    dest: /etc/rabbitmq/rabbitmq-env.conf 
+    #owner: root 
+    #mode: 644
+    backup: yes
+  when: ansible_os_family == "Debian"
+  notify: restart rabbitmq-server
+  tags:
+    - ubuntu
+    - rabbitmq-env
+
+- name: Add rabbit user
+  rabbitmq_user: user={{ rabbit_user }}
+                 password={{ rabbit_password }}
+                 vhost=/
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
+  tags: 
+    - add_user
+    - redhat
+    - ubnuntu

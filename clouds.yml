@@ -1,0 +1,9 @@
+clouds:
+  openstack_newton:
+    auth:
+      auth_url: http://10.0.0.11:5000/v3
+      username: admin
+      password: openstack
+      project_name: admin
+      domain_name: default
+    region_name: RegionOne

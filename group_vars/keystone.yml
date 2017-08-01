@@ -30,39 +30,40 @@ network_service_publicurl: http://{{ public_endpont_ip }}:9696
 network_service_internalurl: http://{{ internal_endpoint_ip }}:9696
 
 # Projects & Accounts #
-admin_project_name: admin
+admin_project: admin
 admin_username: admin
 admin_password: openstack
 admin_email: admin@{{domain_name}}
-admin_description: Admin User
+admin_domain: default
+admin_role: admin
 
-demo_project_name: demo
+demo_project: demo
 demo_username: demo
 demo_password: openstack
 demo_email: demo@{{domain_name}}
-demo_description: Demo User
+demo_domain: default
+demo_role: user
 
-keystone_project_name: service
+keystone_project: service
 keystone_username: keystone
 keystone_password: openstack
 keystone_email: keystone@{{domain_name}}
-keystone_description: Keystone User
+keystone_domain: default
 
-glance_project_name: service
+glance_project: service
 glance_username: glance
 glance_password: openstack
 glance_email: glance@{{domain_name}}
-glance_description: Glance User
+glance_domain: default
 
-nova_project_name: service
+nova_project: service
 nova_username: nova
 nova_password: openstack
 nova_email: nova@{{domain_name}}
-nova_description: Nova User
+nova_domain: default
 
-neutron_project_name: service
+neutron_project: service
 neutron_username: neutron
 neutron_password: openstack
 neutron_email: neutron@{{domain_name}}
-neutron_description: Neutron User
-
+neutron_domain: default
