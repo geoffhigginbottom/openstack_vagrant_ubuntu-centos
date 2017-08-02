@@ -1,0 +1,167 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - glance
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-glance
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: Copy glance-api-paste.ini
+  copy:
+    src: /usr/share/glance/glance-api-dist-paste.ini
+    dest: /etc/glance/glance-api-paste.ini
+    owner: root
+    group: glance
+    remote_src: yes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - paste
+    - redhat
+
+- name: Copy glance-registry-paste.ini
+  copy:
+    src: /usr/share/glance/glance-registry-dist-paste.ini
+    dest: /etc/glance/glance-registry-paste.ini
+    owner: root
+    group: glance
+    remote_src: yes
+  when: ansible_os_family == "RedHat"
+  tags:
+    - paste
+    - redhat
+
+- name: Create /etc/glance/glance-registry.conf file
+  template: 
+    src: glance-registry.conf
+    dest: /etc/glance/glance-registry.conf 
+    owner: root 
+    mode: 0644
+    backup: yes
+  register: registry_result
+  tags:
+    - glance-registry
+    - ubuntu
+    - redhat
+
+- name: restart glance registry (Ubuntu)
+  service: 
+    name: glance-registry 
+    state: restarted
+  when: (ansible_os_family == "Debian") and (registry_result.changed)
+  tags:
+    - glance-registry
+    - ubuntu
+
+- name: restart glance registry (RedHat)
+  service: 
+    name: openstack-glance-registry 
+    state: restarted
+  when: '(ansible_os_family == "RedHat") and (registry_result.changed)'
+  tags:
+    - glance-registry
+    - redhat
+
+- name: Create /etc/glance/glance-api.conf file
+  template: 
+    src: glance-api.conf
+    dest: /etc/glance/glance-api.conf
+    owner: root
+    mode: 0644
+    backup: yes
+  register: api_result
+  tags:
+    - glance-api
+    - ubuntu
+    - redhat
+
+- name: restart glance api (Ubuntu)
+  service: 
+    name: glance-api
+    state: restarted
+  when: (ansible_os_family == "Debian") and (api_result.changed)
+  tags:
+    - glance-api
+    - ubuntu
+
+- name: restart glance api (RedHat)
+  service: 
+    name: openstack-glance-api
+    state: restarted
+  when: (ansible_os_family == "RedHat") and (api_result.changed)
+  tags:
+    - glance-api
+    - redhat
+    
+- name: Ensure Glance API service is started and set to start on boot (RedHat)
+  systemd: 
+    name: openstack-glance-api 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat
+
+- name: Ensure Glance Registry service is started and set to start on boot (RedHat)
+  systemd: 
+    name: openstack-glance-registry 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat
+
+- name: Does Glance DB Exist
+  command:  mysql -e \ "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'glance' AND  table_name = 'image_locations';"
+  register: db_exist
+  changed_when: false
+  tags:
+    - db
+    - ubuntu
+    - redhat
+    
+- name: Perform a Glance DB sync
+  command: "glance-manage db_sync"
+  when: db_exist.stdout != "TABLE_SCHEMA\nglance"
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+# # Shade is required to use the Ansible OpenStack Modules so we install Ansible and Shade
+# # on the controller, then run the relevant playbooks directly from the controller
+# - include: install-ansible.yml
+
+# - name: Run glance_image_deploy.yml on Controller
+#   shell: ansible-playbook glance_image_deploy.yml chdir=/vagrant/
+#   changed_when: false
+#   tags: 
+#     - glance_image_deploy
+#     - cirros_image
+#     - ubuntu_image

@@ -115,9 +115,9 @@
 - name: Bootstrap Identity service
   command: keystone-manage bootstrap --bootstrap-password {{ keystone_admin_password }} --bootstrap-admin-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-internal-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-public-url http://{{ controller1_mgmt_ip }}:5000/v3/ --bootstrap-region-id RegionOne
   changed_when: false
-  when: ansible_os_family == "RedHat"
   tags:
     - bootstrap
+    - ubuntu
     - redhat
 
 - name: Add ServerName attribute to /etc/apache2/apache2.conf
@@ -153,13 +153,6 @@
     - httpd
     - wsgi
     - redhat
-
-# - name: Restart apache2
-#   service: name=apache2 state=restarted
-#   when: ansible_os_family == "Debian"
-#   tags: 
-#     - apache
-#     - ubuntu
 
 - name: Ensure httpd service is started and set to start on boot
   systemd: 

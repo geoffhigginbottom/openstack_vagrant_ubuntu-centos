@@ -1,0 +1,57 @@
+---
+# Due to issues getting the correct version of shade on MacOS
+# we install Ansible on the controller and run the playbooks
+# which require shade from there
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  tags: 
+    - install_ansible
+    - apt_update
+
+- name: Install packages
+  package: name={{ item }} state=present
+  with_items:
+   - software-properties-common
+   - python-pip
+  tags: 
+    - install_ansible
+    - packages
+
+- name: Add PPA Repo
+  apt_repository: repo='ppa:ansible/ansible'
+  tags: 
+    - install_ansible
+    - repository
+
+- name: Update apt sources again
+  apt:
+    update_cache: yes
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  tags: 
+    - install_ansible
+    - repository
+
+- name: Install Ansible
+  package: 
+    name: ansible 
+    state: present
+  tags: 
+    - install_ansible
+    - ansible_package
+
+- name: Install shade
+  pip:
+    name: shade
+    state: present
+  tags: 
+    - install_ansible
+    - shade_package

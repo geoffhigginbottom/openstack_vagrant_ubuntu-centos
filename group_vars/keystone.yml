@@ -35,7 +35,6 @@ admin_username: admin
 admin_password: openstack
 admin_email: admin@{{domain_name}}
 admin_domain: default
-admin_role: admin
 
 demo_project: demo
 demo_username: demo
@@ -55,6 +54,7 @@ glance_username: glance
 glance_password: openstack
 glance_email: glance@{{domain_name}}
 glance_domain: default
+glance_role: admin
 
 nova_project: service
 nova_username: nova
