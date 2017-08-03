@@ -154,14 +154,4 @@
     - ubuntu
     - redhat
 
-# # Shade is required to use the Ansible OpenStack Modules so we install Ansible and Shade
-# # on the controller, then run the relevant playbooks directly from the controller
-# - include: install-ansible.yml
-
-# - name: Run glance_image_deploy.yml on Controller
-#   shell: ansible-playbook glance_image_deploy.yml chdir=/vagrant/
-#   changed_when: false
-#   tags: 
-#     - glance_image_deploy
-#     - cirros_image
-#     - ubuntu_image
+- include: glance_image_deploy.yml

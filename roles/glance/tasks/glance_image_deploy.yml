@@ -1,0 +1,131 @@
+---
+  - name: Check for exsisting cirros image file
+    stat:
+      path: /root/{{ cirros_file_name }}
+    register: cirros_exists
+    when: cirros_deploy_image == true
+    tags:
+      - cirros_image
+      - get_images
+
+  - name: Does Cirros Image Exist?
+    debug:
+      msg: "{{ cirros_exists }}"
+      verbosity: 2
+    when: cirros_deploy_image == true
+    tags:
+      - cirros_image
+      - get_images
+
+  - name: Get Cirros image file
+    get_url:
+      url: "{{ cirros_image_url }}"
+      dest: /root
+      tmp_dest: /root
+      timeout: 60
+    ignore_errors: yes
+    when: cirros_deploy_image == true and cirros_exists.stat.exists == false
+    tags:
+      - cirros_image
+      - get_images
+
+  - name: Check for Cirros image file again
+    stat:
+      path: /root/{{ cirros_file_name }}
+    register: cirros_exists
+    when: cirros_deploy_image == true
+    tags:
+      - cirros_image
+      - get_images
+      - deploy_images
+
+  - name: Did Cirros Image Download?
+    debug:
+      msg: "{{ cirros_exists }}"
+      verbosity: 2
+    when: cirros_deploy_image == true
+    tags:
+      - cirros_image
+      - get_images
+      - deploy_images
+
+  - name: Upload cirros image
+    os_image:
+      cloud: "{{ cloud }}"
+      name: "{{ cirros_image_name }}"
+      container_format: bare
+      disk_format: qcow2
+      state: present
+      filename: /root/{{ cirros_file_name }}
+    when: cirros_deploy_image == true and cirros_exists.stat.exists == true
+    tags:
+      - cirros_image
+      - deploy_images
+
+
+
+
+
+
+  - name: Check for exsisting ubuntu image file
+    stat:
+      path: /root/{{ ubuntu_file_name }}
+    register: ubuntu_exists
+    when: ubuntu_deploy_image == true
+    tags:
+      - ubuntu_image
+      - get_images
+
+  - name: Does Ubuntu Image Exist?
+    debug:
+      msg: "{{ ubuntu_exists }}"
+      verbosity: 2
+    when: ubuntu_deploy_image == true
+    tags:
+      - ubuntu_image
+      - get_images
+
+  - name: Get ubuntu image file
+    get_url:
+      url: "{{ ubuntu_image_url }}"
+      dest: /root
+      tmp_dest: /root
+      timeout: 60
+    ignore_errors: yes
+    when: ubuntu_deploy_image == true and ubuntu_exists.stat.exists == false
+    tags:
+      - ubuntu_image
+      - get_images
+
+  - name: Check for Ubuntu image file again
+    stat:
+      path: /root/{{ ubuntu_file_name }}
+    register: ubuntu_exists
+    when: ubuntu_deploy_image == true
+    tags:
+      - ubuntu_image
+      - get_images
+      - deploy_images
+
+  - name: Did Ubuntu Image Download?
+    debug:
+      msg: "{{ ubuntu_exists }}"
+      verbosity: 2
+    when: ubuntu_deploy_image == true
+    tags:
+      - cirros_image
+      - get_images
+      - deploy_images
+
+  - name: Upload ubuntu image
+    os_image:
+      cloud: "{{ cloud }}"
+      name: "{{ ubuntu_image_name }}"
+      container_format: bare
+      disk_format: qcow2
+      state: present
+      filename: /root/{{ ubuntu_file_name }}
+    when: ubuntu_deploy_image == true and ubuntu_exists.stat.exists == true
+    tags:
+      - ubuntu_image
+      - deploy_images

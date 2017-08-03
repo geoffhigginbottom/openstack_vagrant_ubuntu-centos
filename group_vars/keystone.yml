@@ -2,7 +2,7 @@
 
 ### Keystone Settings ###
 #keystone_server_ip: "{{ controller1_mgmt_ip }}"
-cloud: openstack-newton # name of cloud defined in cloud.yaml
+cloud: openstack_newton # name of cloud defined in cloud.yaml
 default_domain: default
 keystone_auth_admin_token: insecuretoken123
 keystone_revoke_driver: keystone.contrib.revoke.backends.sql.Revoke
@@ -61,6 +61,7 @@ nova_username: nova
 nova_password: openstack
 nova_email: nova@{{domain_name}}
 nova_domain: default
+nova_role: admin
 
 neutron_project: service
 neutron_username: neutron

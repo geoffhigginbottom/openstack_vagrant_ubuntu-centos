@@ -20,13 +20,13 @@
     - ubuntu
     - redhat
 
-- name: Authenticate  to cloud
-  os_auth:
-    cloud: openstack_newton
+# - name: Authenticate  to cloud
+#   os_auth:
+#     cloud: openstack_newton
 
-- name: Display Service Catalog
-  debug: 
-    var: service_catalog
+# - name: Display Service Catalog
+#   debug: 
+#     var: service_catalog
 
 - name: Create Projects
   os_project:
@@ -40,12 +40,10 @@
   with_items:
     - { project_name: 'service', project_description: 'Service Project' } 
     - { project_name: 'demo', project_description: 'Demo Project' }
-    ### - { project_name: 'admin', project_description: 'Admin Project' } ### Not required on RedHat as BootStrap process creates it - need to check for Ubuntu
   tags: 
     - create_projects
     - ubuntu
     - redhat
-
 
 - name: Create Users
   os_user:
@@ -61,22 +59,13 @@
   with_items:
     - { user_name: '{{ demo_username }}', password: '{{ demo_password }}', email: '{{ demo_email }}', domain: '{{ demo_domain }}', project: '{{ demo_project }}', }
     - { user_name: '{{ glance_username }}', password: '{{ glance_password }}', email: '{{ glance_email }}', domain: '{{ glance_domain }}', project: '{{ glance_project }}', }
-    # - { user_name: '{{ _username }}', password: '{{ _password }}', email: '{{ _email }}', domain: '{{ _domain }}', project: '{{ _project }}', }
+    - { user_name: '{{ nova_username }}', password: '{{ nova_password }}', email: '{{ nova_email }}', domain: '{{ nova_domain }}', project: '{{ nova_project }}', }
     # - { user_name: '{{ _username }}', password: '{{ _password }}', email: '{{ _email }}', domain: '{{ _domain }}', project: '{{ _project }}', }
     # - { user_name: '{{ _username }}', password: '{{ _password }}', email: '{{ _email }}', domain: '{{ _domain }}', project: '{{ _project }}', }
   tags: 
     - create_users
     - ubuntu
     - redhat
-
-
-###     - { tenant_name: '{{ admin_project_name }}', user_name: '{{ admin_username }}', password: '{{ admin_password }}', email: '{{ admin_email }}', description: '{{ admin_description }}'} ### Not required on RedHat as BootStrap process creates it - need to check for Ubuntu
-
-#     - { tenant_name: '{{ nova_project_name }}', user_name: '{{ nova_username }}', password: '{{ nova_password }}', email: '{{ nova_email }}', description: '{{ nova_description }}'}
-#     - { tenant_name: '{{ keystone_project_name }}', user_name: '{{ keystone_username }}', password: '{{ keystone_password }}', email: '{{ keystone_email }}', description: '{{ keystone_description }}'}
-#     - { tenant_name: '{{ neutron_project_name }}', user_name: '{{ neutron_username }}', password: '{{ neutron_password }}', email: '{{ neutron_email }}', description: '{{ neutron_description }}'}
-#     # - { tenant_name: 'service', user_name: 'cinder', password: 'cinder', email: 'cinder@openstack.local', description: 'Cinder User'}
-#     # - { tenant_name: 'service', user_name: 'swift', password: 'swift', email: 'swift@openstack.local', description: 'Swift User'}
 
 - name: Crete Roles
   os_keystone_role:
@@ -102,8 +91,13 @@
   with_items:
     - { user: '{{ demo_username }}', role: '{{ demo_role }}', project: '{{ demo_project }}'}
     - { user: '{{ glance_username }}', role: '{{ glance_role }}', project: '{{ glance_project }}'}
+    - { user: '{{ nova_username }}', role: '{{ nova_role }}', project: '{{ nova_project }}'}
+    # - { user: '{{ _username }}', role: '{{ _role }}', project: '{{ _project }}'}
+    # - { user: '{{ _username }}', role: '{{ _role }}', project: '{{ _project }}'}
+    # - { user: '{{ _username }}', role: '{{ _role }}', project: '{{ _project }}'}
+    # - { user: '{{ _username }}', role: '{{ _role }}', project: '{{ _project }}'}
   tags: 
-    - associate
+    - associate_roles
     - ubuntu
     - redhat
 
@@ -117,8 +111,8 @@
     service_type: "{{ item.service_type }}"
     description: "{{ item.service_description}}"
   with_items:
-    - { service_name: 'glance', service_type: 'image', service_description: 'OpenStack Image Service' }
-    # - { service_name: 'nova', service_type: 'compute', service_description: 'OpenStack Compute Service' }
+    - { service_name: 'glance', service_type: 'image', service_description: 'OpenStack Image' }
+    - { service_name: 'nova', service_type: 'compute', service_description: 'OpenStack Compute' }
     # - { service_name: 'network', service_type: 'network', service_description: 'OpenStack Network Service' }
   tags: 
     - add_services
@@ -145,177 +139,12 @@
         interface: "internal"
   with_items:
     - { service_name: 'glance', service_type: 'image', service_publicurl: '{{ glance_service_publicurl }}', service_adminurl: '{{ glance_service_adminurl }}', service_internalurl : '{{ glance_service_internalurl }}' }
-    # - { service_name: 'nova', service_type: 'compute', service_publicurl: '{{ nova_service_publicurl }}', service_adminurl: '{{ nova_service_adminurl }}', service_internalurl : '{{ nova_service_internalurl }}' }
+    - { service_name: 'nova', service_type: 'compute', service_publicurl: '{{ nova_service_publicurl }}', service_adminurl: '{{ nova_service_adminurl }}', service_internalurl : '{{ nova_service_internalurl }}' }
     # - { service_name: 'network', service_type: 'network', service_publicurl: '{{ network_service_publicurl }}', service_adminurl: '{{ network_service_adminurl }}', service_internalurl : '{{ network_service_internalurl }}' }
     # - { service_name: 'ec2', service_type: 'ec2', service_publicurl: '{{ ec2_service_publicurl }}', service_adminurl: '{{ ec2_service_adminurl }}', service_internalurl : '{{ ec2_service_internalurl }}' }
     # - { service_name: 'volume', service_type: 'volume', service_publicurl: '{{ volume_service_publicurl }}', service_adminurl: '{{ volume_service_adminurl }}', service_internalurl : '{{ volume_service_internalurl }}' }
     # - { service_name: 'swift', service_type: 'object-store', service_publicurl: '{{ swift_service_publicurl }}', service_adminurl: '{{ swift_service_adminurl }}', service_internalurl : '{{ swift_service_internalurl }}' }
   tags:
     - add_endpoints
-
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-
-
-# - name: Add Keystone Services
-#   keystone:
-#     command: "ensure_service"
-#     token: "{{ keystone_auth_admin_token }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     service_name: "{{ item.service_name }}"
-#     service_type: "{{ item.service_type }}"
-#     description: "{{ item.service_description }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#   with_items: 
-#     - { service_name: 'keystone', service_type: 'identity', service_description: 'OpenStack Identity Service' }
-#     - { service_name: 'glance', service_type: 'image', service_description: 'OpenStack Image Service' }
-#     - { service_name: 'nova', service_type: 'compute', service_description: 'OpenStack Compute Service' }
-#     - { service_name: 'network', service_type: 'network', service_description: 'OpenStack Network Service' }
-#     # - { service_name: 'ec2', service_type: 'ec2', service_description: 'OpenStack EC2 Service' }
-#     # - { service_name: 'volume', service_type: 'volume', service_description: 'OpenStack Volume Service' }
-#     # - { service_name: 'swift', service_type: 'object-store', service_description: 'OpenStack Object Storage Service' }
-#   register: add_services
-#   until: add_services|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - add_services
-
-# - name: Add Keystone Endpoints
-#   keystone:
-#     command: "ensure_endpoint"
-#     token: "{{ keystone_auth_admin_token }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     region_name: "{{ keystone_service_region }}"
-#     service_name: "{{ item.service_name }}"
-#     service_type: "{{ item.service_type }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#     endpoint_list:
-#       - url: "{{ item.service_publicurl }}"
-#         interface: "public"
-#       - url: "{{ item.service_adminurl }}"
-#         interface: "admin"
-#       - url: "{{ item.service_internalurl }}"
-#         interface: "internal"
-#   with_items:
-#     - { service_name: 'keystone', service_type: 'identity', service_publicurl: '{{ keystone_service_publicurl }}/v3', service_adminurl: '{{ keystone_service_adminurl }}/v3', service_internalurl : '{{ keystone_service_internalurl }}/v3' }
-#     - { service_name: 'glance', service_type: 'image', service_publicurl: '{{ glance_service_publicurl }}', service_adminurl: '{{ glance_service_adminurl }}', service_internalurl : '{{ glance_service_internalurl }}' }
-#     - { service_name: 'nova', service_type: 'compute', service_publicurl: '{{ nova_service_publicurl }}', service_adminurl: '{{ nova_service_adminurl }}', service_internalurl : '{{ nova_service_internalurl }}' }
-#     - { service_name: 'network', service_type: 'network', service_publicurl: '{{ network_service_publicurl }}', service_adminurl: '{{ network_service_adminurl }}', service_internalurl : '{{ network_service_internalurl }}' }
-#     # - { service_name: 'ec2', service_type: 'ec2', service_publicurl: '{{ ec2_service_publicurl }}', service_adminurl: '{{ ec2_service_adminurl }}', service_internalurl : '{{ ec2_service_internalurl }}' }
-#     # - { service_name: 'volume', service_type: 'volume', service_publicurl: '{{ volume_service_publicurl }}', service_adminurl: '{{ volume_service_adminurl }}', service_internalurl : '{{ volume_service_internalurl }}' }
-#     # - { service_name: 'swift', service_type: 'object-store', service_publicurl: '{{ swift_service_publicurl }}', service_adminurl: '{{ swift_service_adminurl }}', service_internalurl : '{{ swift_service_internalurl }}' }
-#   register: add_endpoint
-#   until: add_endpoint|success
-#   retries: 2
-#   delay: 5
-#   tags:
-#     - add_endpoints
-
-# - name: Create Default domain
-#   keystone:
-#     command: "ensure_domain"
-#     domain_name: "{{ default_domain }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     token: "{{ keystone_auth_admin_token }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#   register: add_domain
-#   until: add_domain|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - add_domain
-
-# - name: Create Projects
-#   keystone:
-#     command: "ensure_project"
-#     project_name: "{{ item.tenant }}"
-#     domain_name: "{{ default_domain }}"
-#     description: "{{ item.desc }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     token: "{{ keystone_auth_admin_token }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#   with_items: 
-#     - { tenant: 'demo', desc: 'Demo Project' }
-#     - { tenant: 'admin', desc: 'Admin Project' }
-#     - { tenant: 'service', desc: 'Service Project' }
-#   register: add_tenant
-#   until: add_tenant|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - add_projects
-
-# - name: Create Users
-#   keystone:
-#     command: "ensure_user"
-#     token: "{{ keystone_auth_admin_token }}"
-#     tenant_name: "{{ item.tenant_name  }}"
-#     domain_name: "{{ default_domain }}"
-#     user_name: "{{ item.user_name  }}"
-#     password: "{{ item.password  }}"
-#     email: "{{ item.email }}"
-#     description: "{{ item.description  }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     insecure: true
-#   with_items: 
-#     - { tenant_name: '{{ admin_project_name }}', user_name: '{{ admin_username }}', password: '{{ admin_password }}', email: '{{ admin_email }}', description: '{{ admin_description }}'}
-#     - { tenant_name: '{{ demo_project_name }}', user_name: '{{ demo_username }}', password: '{{ demo_password }}', email: '{{ demo_email }}', description: '{{ demo_description }}'}
-#     - { tenant_name: '{{ glance_project_name }}', user_name: '{{ glance_username }}', password: '{{ glance_password }}', email: '{{ glance_email }}', description: '{{ glance_description }}'}
-#     - { tenant_name: '{{ nova_project_name }}', user_name: '{{ nova_username }}', password: '{{ nova_password }}', email: '{{ nova_email }}', description: '{{ nova_description }}'}
-#     - { tenant_name: '{{ keystone_project_name }}', user_name: '{{ keystone_username }}', password: '{{ keystone_password }}', email: '{{ keystone_email }}', description: '{{ keystone_description }}'}
-#     - { tenant_name: '{{ neutron_project_name }}', user_name: '{{ neutron_username }}', password: '{{ neutron_password }}', email: '{{ neutron_email }}', description: '{{ neutron_description }}'}
-#     # - { tenant_name: 'service', user_name: 'cinder', password: 'cinder', email: 'cinder@openstack.local', description: 'Cinder User'}
-#     # - { tenant_name: 'service', user_name: 'swift', password: 'swift', email: 'swift@openstack.local', description: 'Swift User'}
-#   register: add_user
-#   until: add_user|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - add_users
-
-# - name: Create Roles
-#   keystone:
-#     command: "ensure_role"
-#     token: "{{ keystone_auth_admin_token }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     role_name: "{{ item }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#   with_items:
-#     - admin
-#     - user
-#   register: add_role
-#   until: add_role|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - add_roles
-
-# - name: Assign Users to Roles
-#   keystone:
-#     command: "ensure_user_role"
-#     token: "{{ keystone_auth_admin_token }}"
-#     endpoint: "{{ keystone_service_adminurl }}/v3"
-#     user_name: "{{ item.user_name }}"
-#     project_name: "{{ item.project_name }}"
-#     domain_name: "{{ default_domain }}"
-#     role_name: "{{ item.keystone_role_name }}"
-#     insecure: "{{ keystone_service_adminuri_insecure }}"
-#   with_items: 
-#     - { project_name: '{{ admin_project_name }}', user_name: '{{ admin_username }}', keystone_role_name: 'admin' }
-#     - { project_name: '{{ demo_project_name }}', user_name: '{{ demo_username }}', keystone_role_name: 'user' }
-#     - { project_name: '{{ keystone_project_name }}', user_name: '{{ keystone_username }}', keystone_role_name: 'admin' }
-#     - { project_name: '{{ glance_project_name }}', user_name: '{{ glance_username }}', keystone_role_name: 'admin' }
-#     - { project_name: '{{ nova_project_name }}', user_name: '{{ nova_username }}', keystone_role_name: 'admin' }
-#     - { project_name: '{{ neutron_project_name }}', user_name: '{{ neutron_username }}', keystone_role_name: 'admin' }
-#     # - { project_name: 'service', user_name: 'cinder', keystone_role_name: 'admin' }
-#     # - { project_name: 'service', user_name: 'swift', keystone_role_name: 'admin' }
-#   register: assign_roles
-#   until: assign_roles|success
-#   retries: 2
-#   delay: 5
-#   tags: 
-#     - assign_roles
-
-
+    - ubuntu
+    - redhat

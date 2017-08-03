@@ -24,14 +24,8 @@ unless File.directory?( dir )
 end # unless
 
 Vagrant.configure("2") do |config| 
-  
-  # config.vm.box = "bento/ubuntu-16.04"
-  # config.vm.box = "~/./VirtualBox\ VMs/ubuntu-xenial-20170711"
-  
-  # config.vm.box = "~/./VirtualBox\ VMs/centos-7-20170727.box"
-  config.vm.box = "bento/centos-7.3"
-  # config.vm.box = "skyzyx/centos7"
-  
+  config.vm.box = "bento/ubuntu-16.04"
+  # config.vm.box = "bento/centos-7.3"
   config.vm.usable_port_range = 2800..2900
   config.vm.boot_timeout = 360
   config.vm.synced_folder ".", "/vagrant", disabled: true
