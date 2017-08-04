@@ -24,8 +24,8 @@ unless File.directory?( dir )
 end # unless
 
 Vagrant.configure("2") do |config| 
-  config.vm.box = "bento/ubuntu-16.04"
-  # config.vm.box = "bento/centos-7.3"
+  # config.vm.box = "bento/ubuntu-16.04"    # Change these two lines to switch between an Ubuntu or RedHat release
+  config.vm.box = "bento/centos-7.3"      # Change these two lines to switch between an Ubuntu or RedHat release
   config.vm.usable_port_range = 2800..2900
   config.vm.boot_timeout = 360
   config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -100,7 +100,7 @@ Vagrant.configure("2") do |config|
           config.vm.provision "ansible" do |ansible|
             # Disable default limit to connect to all the machines
             ansible.limit = "all"
-            ansible.playbook = "site.yml"
+            ansible.playbook = "vagrant_site.yml"
             ansible.groups = {
               "controller" => ["controller1"],
               "compute" => ["compute1"],

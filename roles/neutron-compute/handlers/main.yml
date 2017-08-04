@@ -1,0 +1,17 @@
+---
+  
+- name: restart nova-compute
+  service: 
+    name: nova-compute 
+    state: restarted
+
+- name: restart neutron-linuxbridge-agent
+  service: 
+    name: neutron-linuxbridge-agent
+    state: restarted
+
+- name: restart all
+  service: name={{ item }} state=restarted
+  with_items:
+    - nova-compute 
+    - neutron-linuxbridge-agent

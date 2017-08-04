@@ -1,0 +1,133 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - nova-api
+    - nova-conductor
+    - nova-consoleauth
+    - nova-novncproxy
+    - nova-scheduler
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-nova-api 
+    - openstack-nova-conductor
+    - openstack-nova-console 
+    - openstack-nova-novncproxy
+    - openstack-nova-scheduler
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: Create /etc/nova/nova.conf file
+  template: 
+    src: nova.conf 
+    dest: /etc/nova/nova.conf 
+    owner: root 
+    mode: 0644 
+    backup: yes
+  register: nova_conf
+  tags:
+    - nova.conf
+    - ubuntu
+    - redhat
+
+- name: Does Nova DB Schema Exist
+  command:  mysql -e \ "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'nova' AND  table_name = 'agent_builds';"
+  register: db_exist
+  changed_when: false
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: Create Nova DB Schema
+  command: nova-manage db sync
+  when: db_exist.stdout != "TABLE_SCHEMA\nnova"
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: Does Nova API DB Schema Exist
+  command:  mysql -e \ "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'nova_api' AND  table_name = 'build_requests';"
+  register: db_exist
+  changed_when: false
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: Create Nova API DB Schema
+  command: nova-manage api_db sync
+  when: db_exist.stdout != "TABLE_SCHEMA\nnova_api"
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: restart nova-services (Ubuntu)
+  service: 
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - nova-api
+    - nova-consoleauth
+    - nova-scheduler
+    - nova-conductor
+    - nova-novncproxy
+  when: (nova_conf.changed) and (ansible_os_family == "Debian")
+  tags:
+    - nova.conf
+    - ubuntu
+
+- name: restart nova-services (RedHat)
+  systemd: 
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - openstack-nova-api
+    - openstack-nova-consoleauth
+    - openstack-nova-scheduler
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+  when: (nova_conf.changed) and (ansible_os_family == "RedHat")
+  tags:
+    - nova.conf
+    - redhat
+
+- name: Ensure Nova services are started and set to start on boot (RedHat)
+  systemd: 
+    name: "{{ item }}"
+    state: started 
+    enabled: yes
+  with_items:
+    - openstack-nova-api
+    - openstack-nova-consoleauth
+    - openstack-nova-scheduler
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat

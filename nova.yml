@@ -1,0 +1,7 @@
+---
+- hosts: compute
+  vars_files:
+    - group_vars/keystone.yml
+    - group_vars/glance.yml
+  roles:
+    - nova

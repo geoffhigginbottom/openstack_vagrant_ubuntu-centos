@@ -36,7 +36,6 @@ object2_hostname: object2
 
 ### Neutron Settings ###
 # vm_interface_name: enp0s10 # Name of the Interface used for the VM traffic
-# provider_interface_name: enp0s9 # Name of the Interface used on the Controller for the provider network
 provider_interface_name_ubuntu: enp0s9 # Name of the Interface used on the Controller for the provider network
 provider_interface_name_redhat: eth1 # Name of the Interface used on the Controller for the provider network
 nova_metadata_ip: "{{ controller1_mgmt_ip }}"

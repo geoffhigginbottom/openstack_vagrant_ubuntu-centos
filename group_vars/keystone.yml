@@ -68,3 +68,4 @@ neutron_username: neutron
 neutron_password: openstack
 neutron_email: neutron@{{domain_name}}
 neutron_domain: default
+neutron_role: admin

@@ -1,0 +1,99 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - nova-compute
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-nova-compute 
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: Set my_ip_value Ubuntu
+  set_fact:
+    my_ip_value: "{{ ansible_enp0s8.ipv4.address }}"
+  when: ansible_os_family == "Debian"
+  tags:
+    - nova.conf
+    - ubuntu
+
+- name: Set my_ip_value RedHat
+  set_fact:
+    my_ip_value: "{{ ansible_eth1.ipv4.address }}"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - nova.conf
+    - redhat
+
+- name: Update /etc/nova/nova.conf file
+  template: 
+    src: nova.conf 
+    dest: /etc/nova/nova.conf 
+    owner: nova 
+    mode: 0640
+    backup: yes
+  register: nova_conf
+  tags:
+    - nova.conf
+    - ubuntu
+    - redhat
+
+- name: Restart nova-compute (Ubuntu)
+  systemd:
+    name: nova-compute
+    state: restarted
+  when: (nova_conf.changed) and (ansible_os_family == "Debian") 
+  tags:
+    - nova.conf
+    - redhat
+
+- name: Restart openstack-nova-compute (RedHat)
+  systemd:
+    name: openstack-nova-compute
+    state: restarted
+  when: (nova_conf.changed) and (ansible_os_family == "RedHat") 
+  tags:
+    - nova.conf
+    - redhat
+
+- name: Restart libvirtd
+  systemd:
+    name: libvirtd
+    state: restarted
+  when: nova_conf.changed
+  tags:
+    - nova.conf
+    - ubuntu
+    - redhat
+
+- name: Ensure openstack-nova-compute service is started and set to start on boot (RedHat)
+  systemd: 
+    name: openstack-nova-compute 
+    state: started 
+    enabled: yes
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat

@@ -1,0 +1,6 @@
+---
+- hosts: compute
+  vars_files:
+    - group_vars/keystone.yml
+  roles:
+    - neutron-compute

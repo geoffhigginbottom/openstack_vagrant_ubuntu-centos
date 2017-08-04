@@ -1,0 +1,138 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - neutron-linuxbridge-agent
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-neutron-linuxbridge
+    - ebtables
+    - ipset
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: deploy /etc/neutron/neutron.conf (Ubuntu)
+  template:
+    src: ubuntu_neutron.conf 
+    dest: /etc/neutron/neutron.conf 
+    backup: yes
+  register: ubuntu_nova_conf
+  when: ansible_os_family == "Debian"
+  tags: 
+    - neutron.conf
+    - ubuntu
+
+- name: deploy /etc/neutron/neutron.conf (RedHat)
+  template:
+    src: redhat_neutron.conf 
+    dest: /etc/neutron/neutron.conf 
+    backup: yes
+  register: redhat_nova_conf
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - neutron.conf
+    - ubuntu
+
+- name: Set provider_interface_name (Ubuntu)
+  set_fact:
+    provider_interface_name: "{{ provider_interface_name_ubuntu }}"
+  when: ansible_os_family == "Debian"
+  tags:
+    - linuxbridge_agent.ini
+    - ubuntu
+
+- name: Set provider_interface_ip (Ubuntu)
+  set_fact:
+    provider_interface_ip: "{{ ansible_enp0s8.ipv4.address }}"
+  when: ansible_os_family == "Debian"
+  tags:
+    - linuxbridge_agent.ini
+    - ubuntu
+
+- name: Set provider_interface_name (RedHat)
+  set_fact:
+    provider_interface_name: "{{ provider_interface_name_redhat }}"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - linuxbridge_agent.ini
+    - redhat
+
+- name: Set provider_interface_ip (RedHat)
+  set_fact:
+    provider_interface_ip: "{{ ansible_eth1.ipv4.address }}"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - linuxbridge_agent.ini
+    - redhat
+
+- name: deploy linuxbridge_agent.ini (Ubuntu)
+  template: 
+    src: linuxbridge_agent.ini 
+    dest: /etc/neutron/plugins/ml2/linuxbridge_agent.ini 
+    backup: yes
+  register: neutron_linuxbridge_agent
+  tags:
+    - linuxbridge_agent.ini
+    - ubuntu
+    - redhat
+
+- name: Restart nova-compute service (Ubuntu)
+  systemd:
+    name: nova-compute
+    state: restarted
+  when: (ansible_os_family == "Debian") and (ubuntu_nova_conf.changed)
+  tags:
+    - neutron.conf
+    - ubuntu
+
+- name: Restart openstack-nova-compute service (RedHat)
+  systemd:
+    name: openstack-nova-compute
+    state: restarted
+  when: (ansible_os_family == "RedHat") and (redhat_nova_conf.changed)
+  tags:
+    - neutron.conf
+    - redhat
+
+- name: Restart neutron-linuxbridge-agent service
+  systemd:
+    name: neutron-linuxbridge-agent
+    state: restarted
+  when: neutron_linuxbridge_agent.changed
+  tags:
+    - linuxbridge_agent.ini
+    - ubuntu
+    - redhat
+
+- name: Ensure Neutron services are started and set to start on boot (RedHat)
+  systemd: 
+    name: "{{ item }}"
+    state: started 
+    enabled: yes
+  with_items:
+    - neutron-linuxbridge-agent
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service

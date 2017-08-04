@@ -15,9 +15,9 @@
 - include: memcached.yml
 - include: keystone-install.yml
 - include: keystone-configure.yml
-# - include: glance.yml
-# - include: nova-controller.yml
-# - include: nova.yml
+- include: glance.yml
+- include: nova-controller.yml
+- include: nova.yml
 # - include: neutron.yml
 # - include: neutron-compute.yml
 # - include: horizon.yml

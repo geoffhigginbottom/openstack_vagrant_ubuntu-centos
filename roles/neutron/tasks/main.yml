@@ -1,0 +1,213 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Ubuntu Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - neutron-server
+    - neutron-plugin-ml2
+    - neutron-linuxbridge-agent
+    - neutron-dhcp-agent
+    - neutron-metadata-agent
+  when: ansible_os_family == "Debian"
+  tags: 
+    - packages
+    - ubuntu
+
+- name: Install RedHat Packages
+  yum: name={{ item }} state=present
+  with_items:
+    - openstack-neutron
+    - openstack-neutron-ml2
+    - openstack-neutron-linuxbridge
+    - ebtables
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - packages
+    - redhat
+
+- name: Set Restart OS Flag Ubuntu
+  set_fact:
+    restart_os_flag: ubuntu 
+  when: ansible_os_family == "Debian"
+  tags:
+    - ubuntu
+
+- name: Set Restart OS Flag RedHat
+  set_fact:
+    restart_os_flag: redhat 
+  when: ansible_os_family == "RedHat"
+  tags:
+    - redhat
+
+- name: deploy /etc/neutron/neutron.conf (Ubuntu)
+  template:
+    src: ubuntu_neutron.conf 
+    dest: /etc/neutron/neutron.conf 
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  when: ansible_os_family == "Debian"
+  tags: 
+    - neutron.conf
+    - conf_files
+    - ubuntu
+
+- name: deploy /etc/neutron/neutron.conf (RedHat)
+  template:
+    src: redhat_neutron.conf 
+    dest: /etc/neutron/neutron.conf 
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  when: ansible_os_family == "RedHat"
+  tags: 
+    - neutron.conf
+    - conf_files
+    - redhat
+
+- name: deploy /etc/neutron/plugins/ml2/ml2_conf.ini
+  template:
+    src: ml2_conf.ini 
+    dest: /etc/neutron/plugins/ml2/ml2_conf.ini 
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  tags: 
+    - ml2_conf.ini
+    - conf_files
+    - ubuntu
+    - redhat
+
+- name: Set provider_interface_name (Ubuntu)
+  set_fact:
+    provider_interface_name: "{{ provider_interface_name_ubuntu }}"
+  when: ansible_os_family == "Debian"
+  tags:
+    - linuxbridge_agent.ini
+    - conf_files
+    - ubuntu
+
+- name: Set provider_interface_name (RedHat)
+  set_fact:
+    provider_interface_name: "{{ provider_interface_name_redhat }}"
+  when: ansible_os_family == "RedHat"
+  tags:
+    - linuxbridge_agent.ini
+    - conf_files
+    - redhat
+
+- name: deploy /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+  template: 
+    src: linuxbridge_agent.ini 
+    dest: /etc/neutron/plugins/ml2/linuxbridge_agent.ini 
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  tags: 
+    - linuxbridge_agent.ini
+    - conf_files
+    - ubuntu
+    - redhat
+
+- name: deploy /etc/neutron/l3_agent.ini
+  template:
+    src: l3_agent.ini
+    dest: /etc/neutron/l3_agent.ini
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  tags: 
+    - l3_agent.ini
+    - conf_files
+    - ubuntu
+    - redhat
+
+- name: deploy /etc/neutron/dhcp_agent.ini using
+  template:
+    src: dhcp_agent.ini
+    dest: /etc/neutron/dhcp_agent.ini
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  tags: 
+    - dhcp_agent.ini
+    - conf_files
+    - ubuntu
+    - redhat
+
+- name: create ml2_conf.ini link (RedHat)
+  file:
+    src: /etc/neutron/plugins/ml2/ml2_conf.ini
+    dest: /etc/neutron/plugin.ini
+    state: link
+  when: ansible_os_family == "RedHat"
+  notify: restart all {{ restart_os_flag }}
+  tags:
+    - ml2_conf.ini
+    - conf_files
+    - redhat
+
+- name: deploy /etc/neutron/metadata_agent.ini (Ubuntu)
+  template:
+    src: metadata_agent.ini 
+    dest: /etc/neutron/metadata_agent.ini 
+    backup: yes
+  notify: restart all {{ restart_os_flag }}
+  tags: 
+    - metadata_agent.ini
+    - conf_files
+    - ubuntu
+
+- name: Does Neutron DB Exist
+  command:  mysql -e \ "SELECT TABLE_SCHEMA FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = 'neutron' AND  table_name = 'agents';"
+  register: db_exist
+  changed_when: false
+  tags:
+    - db
+    - ubuntu
+    - redhat
+
+- name: Populate neutron DB
+  command: 'su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron'
+  when: db_exist.stdout != "TABLE_SCHEMA\nneutron"
+  notify: restart all {{ restart_os_flag }}
+  register: db_deploy
+  tags: 
+    - db
+    - ubuntu
+    - redhat
+
+- name: Restart nova-api service (Ubuntu)
+  systemd:
+    name: nova-api
+    state: restarted
+  when: (ansible_os_family == "Debian") and (db_deploy.changed)
+
+- name: Restart openstack-nova-api service (RedHat)
+  systemd:
+    name: openstack-nova-api
+    state: restarted
+  when: (ansible_os_family == "RedHat") and (db_deploy.changed)
+
+- name: Ensure Neutron services are started and set to start on boot (RedHat)
+  systemd: 
+    name: "{{ item }}"
+    state: started 
+    enabled: yes
+  with_items:
+    - neutron-server
+    - neutron-linuxbridge-agent
+    - neutron-dhcp-agent
+    - neutron-metadata-agent
+    - neutron-l3-agent
+  when: ansible_os_family == "RedHat"
+  tags: 
+   - service
+   - redhat
