@@ -1,0 +1,63 @@
+---
+
+- name: Update apt sources
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  register: apt_update
+  until: apt_update|success
+  retries: 5
+  delay: 2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - update
+    - ubuntu
+
+- name: Install Packages
+  package: name={{ item }} state=present
+  with_items:
+    - openstack-dashboard
+  tags: 
+    - packages
+    - ubuntu
+    - redhat
+
+- name: deploy /etc/openstack-dashboard/local_settings.py (Ubuntu)
+  template: 
+    src: ubuntu_local_settings.py 
+    dest: /etc/openstack-dashboard/local_settings.py 
+    backup: yes
+  notify: restart apache2
+  when: ansible_os_family == "Debian"
+  tags: 
+    - apache_config
+    - ubuntu
+
+- name: deploy /etc/openstack-dashboard/local_settings (RedHat)
+  template:
+    src: redhat_local_settings
+    dest: /etc/openstack-dashboard/local_settings
+    owner: root
+    group: apache
+    backup: yes
+  register: local_settings
+  when: ansible_os_family == "RedHat"
+  tags:
+    - apache_config
+    - redhat
+
+- name: restart httpd service
+  systemd:
+    state: restarted
+    name: httpd
+  when: (local_settings.changed) and (ansible_os_family == "RedHat")
+  tags:
+    - redhat
+
+- name: restart memcached service
+  systemd:
+    state: restarted
+    name: memcached
+  when: (local_settings.changed) and (ansible_os_family == "RedHat")
+  tags:
+    - redhat
