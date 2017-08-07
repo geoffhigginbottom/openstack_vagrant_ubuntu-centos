@@ -18,6 +18,6 @@
 - include: glance.yml
 - include: nova-controller.yml
 - include: nova.yml
-# - include: neutron.yml
-# - include: neutron-compute.yml
+- include: neutron.yml
+- include: neutron-compute.yml
 # - include: horizon.yml
