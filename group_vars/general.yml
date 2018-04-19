@@ -1,9 +1,10 @@
 ---
 
-cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/newton main
-# cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/ocata main
+# cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/newton main
+cloud_archive_repository: deb http://ubuntu-cloud.archive.canonical.com/ubuntu xenial-updates/ocata main
 
-centos_openstack_release: centos-release-openstack-newton
+# centos_openstack_release: centos-release-openstack-newton
+centos_openstack_release: centos-release-openstack-ocata
 
 ### NTP Sewrver Settings ###
 # Used in the NTP Server and NTP Client Roles

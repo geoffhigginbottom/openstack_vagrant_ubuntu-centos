@@ -17,7 +17,7 @@
   apt: name={{ item }} state=present
   with_items:
     - keystone
-    - python-openstackclient
+    # - python-openstackclient
     - python-pip
   when: ansible_os_family == "Debian"
   tags: 
@@ -113,7 +113,7 @@
     - redhat
 
 - name: Bootstrap Identity service
-  command: keystone-manage bootstrap --bootstrap-password {{ keystone_admin_password }} --bootstrap-admin-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-internal-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-public-url http://{{ controller1_mgmt_ip }}:5000/v3/ --bootstrap-region-id RegionOne
+  command: keystone-manage bootstrap --bootstrap-password {{ keystone_admin_password }} --bootstrap-admin-url http://{{ controller1_mgmt_ip }}:35357/v3/ --bootstrap-internal-url http://{{ controller1_mgmt_ip }}:5000/v3/ --bootstrap-public-url http://{{ controller1_mgmt_ip }}:5000/v3/ --bootstrap-region-id RegionOne
   changed_when: false
   tags:
     - bootstrap
@@ -124,7 +124,7 @@
   lineinfile: 
     dest: /etc/apache2/apache2.conf
     regexp: 'ServerName'
-    line: 'ServerName {{ ansible_hostname }}'
+    line: 'ServerName {{ controller1_mgmt_ip }}'
   notify: restart apache2
   when: ansible_os_family == "Debian"
   tags:

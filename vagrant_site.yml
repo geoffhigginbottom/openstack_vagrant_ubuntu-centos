@@ -20,4 +20,4 @@
 - include: nova.yml
 - include: neutron.yml
 - include: neutron-compute.yml
-# - include: horizon.yml
+- include: horizon.yml
